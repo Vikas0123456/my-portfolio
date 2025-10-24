@@ -48,7 +48,7 @@ const Contact = () => {
     try {
       // Backend URL configuration
       const backendUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://your-backend-url.vercel.app' // TODO: Replace with your actual Vercel backend URL after deployment
+        ? 'https://my-portfolio-bscx.vercel.app' // Fixed: Added https:// protocol
         : 'http://localhost:3000';
 
       const response = await fetch(`${backendUrl}/api/contact`, {
