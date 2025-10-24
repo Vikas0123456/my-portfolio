@@ -24,6 +24,7 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'https://my-portfolio-vikastomar1308-9573-vikas-tomars-projects-ce26156c.vercel.app',
+    'https://my-portfolio-eqbjm1dtl-vikas-tomars-projects-ce26156c.vercel.app',
     'http://localhost:5173'
   ],
   credentials: true
