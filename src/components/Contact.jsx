@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, MessageCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, MessageCircle, Loader2 } from 'lucide-react';
+import Toast from './Toast';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,13 @@ const Contact = () => {
     message: ''
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' // 'success', 'error'
+  });
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -16,16 +24,69 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const showToast = (message, type) => {
+    setToast({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const hideToast = () => {
+    setToast({
+      isVisible: false,
+      message: '',
+      type: 'success'
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    // Reset form
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setIsSubmitting(true);
+    hideToast();
+
+    try {
+      // Backend URL configuration
+      const backendUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://your-backend-url.vercel.app' // TODO: Replace with your actual Vercel backend URL after deployment
+        : 'http://localhost:3000';
+
+      const response = await fetch(`${backendUrl}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showToast('Thank you for your message! I will get back to you soon.', 'success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        showToast(result.message || 'Sorry, there was an error sending your message. Please try again.', 'error');
+        console.error('Submission failed:', result.message);
+      }
+    } catch (error) {
+      showToast('Network error. Please check your connection and try again.', 'error');
+      console.error('Network error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="contact" className="py-20 bg-gray-900 relative overflow-hidden">
+    <>
+      {/* Toast Notification */}
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
+      
+      <section id="contact" className="py-20 bg-gray-900 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl"></div>
@@ -131,6 +192,8 @@ const Contact = () => {
           {/* Contact Form */}
           <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700 p-8">
             <h3 className="text-2xl font-semibold text-white mb-6">Send a Message</h3>
+            
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -199,16 +262,27 @@ const Contact = () => {
               
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-4 rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-4 rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                <Send className="w-5 h-5" />
-                <span>Send Message</span>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    <span>Send Message</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
         </div>
       </div>
     </section>
+    </>
   );
 };
 
